@@ -54,6 +54,11 @@ const handler: Handler = async (event: HandlerEvent) => {
     const qrValue = generateQRCode();
 
     console.log('create-order: Inserting order into database');
+    console.log('create-order: user_id:', user.user_id);
+    console.log('create-order: items:', JSON.stringify(items));
+    console.log('create-order: qrValue:', qrValue);
+    console.log('create-order: roomNumber:', roomNumber.trim());
+    
     const result = await sql`
       INSERT INTO orders (user_id, items, qr_value, room_number, status)
       VALUES (${user.user_id}, ${JSON.stringify(items)}, ${qrValue}, ${roomNumber.trim()}, 'placed')
