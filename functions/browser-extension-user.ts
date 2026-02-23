@@ -19,123 +19,21 @@ const handler: Handler = async (event: HandlerEvent) => {
     };
   }
 
-  try {
-    console.log('browser-extension-user: Request received');
-    console.log('browser-extension-user: Headers:', JSON.stringify(event.headers));
-    
-    let token: string | null = null;
-
-    // Try to get token from Authorization header first (for browser extensions)
-    const authHeader = event.headers.authorization || event.headers.Authorization;
-    console.log('browser-extension-user: Auth header:', authHeader);
-    
-    if (authHeader) {
-      // Support both "Bearer token" and just "token" formats
-      if (authHeader.toLowerCase().startsWith('bearer ')) {
-        token = authHeader.substring(7);
-      } else {
-        token = authHeader;
-      }
-    }
-
-    // Fall back to cookie if no Authorization header
-    if (!token) {
-      const cookie = event.headers.cookie || '';
-      console.log('browser-extension-user: Cookie:', cookie.substring(0, 50) + '...');
-      const match = cookie.match(/session=([^;]+)/);
-      if (match) {
-        token = match[1];
-      }
-    }
-
-    console.log('browser-extension-user: Token found:', !!token);
-
-    // If no token found, return not logged in (but successful response)
-    // This allows the browser extension to distinguish between logged in and not logged in
-    if (!token) {
-      return {
-        statusCode: 200,
-        headers: { 
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': 'Authorization, Content-Type'
-        },
-        body: JSON.stringify({
-          isKamiApiSuccessfulResponse: true,
-          user: null,
-          message: 'Not authenticated'
-        })
-      };
-    }
-
-    // Validate the session token
-    const user = await getSessionUser(token);
-
-    if (!user) {
-      // Invalid token - return not logged in (but successful response)
-      return {
-        statusCode: 200,
-        headers: { 
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': 'Authorization, Content-Type'
-        },
-        body: JSON.stringify({
-          isKamiApiSuccessfulResponse: true,
-          user: null,
-          message: 'Invalid or expired session'
-        })
-      };
-    }
-
-    // Return user data in a format compatible with browser extensions
-    return {
-      statusCode: 200,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Authorization, Content-Type'
-      },
-      body: JSON.stringify({
-        isKamiApiSuccessfulResponse: true,
-        user: {
-          id: user.user_id,
-          username: user.username,
-          email: user.email,
-          email_verified: !!user.email_verified_at,
-        },
-      }),
-    };
-  } catch (error) {
-    console.error('Error in browser-extension-user:', error);
-    console.error('Error message:', error instanceof Error ? error.message : String(error));
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
-    
-    // Check if it's a database connection error
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    if (errorMessage.includes('DATABASE_URL') || errorMessage.includes('connection')) {
-      return { 
-        statusCode: 503, 
-        body: JSON.stringify({ 
-          error: { 
-            errors: ['Database connection unavailable'] 
-          },
-          isKamiApiSuccessfulResponse: false,
-          details: errorMessage
-        }) 
-      };
-    }
-    
-    return { 
-      statusCode: 500, 
-      body: JSON.stringify({ 
-        error: { 
-          errors: ['Internal server error'] 
-        },
-        isKamiApiSuccessfulResponse: false 
-      }) 
-    };
-  }
+  // DEBUG: Return test response to verify redirect is working
+  return {
+    statusCode: 200,
+    headers: { 
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    },
+    body: JSON.stringify({
+      isKamiApiSuccessfulResponse: true,
+      user: null,
+      message: 'TEST RESPONSE - Redirect is working!',
+      path: event.path,
+      headers: Object.keys(event.headers)
+    })
+  };
 };
 
 // Handle CORS preflight requests
