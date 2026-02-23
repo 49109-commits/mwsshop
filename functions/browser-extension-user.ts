@@ -108,6 +108,24 @@ const handler: Handler = async (event: HandlerEvent) => {
     };
   } catch (error) {
     console.error('Error in browser-extension-user:', error);
+    console.error('Error message:', error instanceof Error ? error.message : String(error));
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+    
+    // Check if it's a database connection error
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes('DATABASE_URL') || errorMessage.includes('connection')) {
+      return { 
+        statusCode: 503, 
+        body: JSON.stringify({ 
+          error: { 
+            errors: ['Database connection unavailable'] 
+          },
+          isKamiApiSuccessfulResponse: false,
+          details: errorMessage
+        }) 
+      };
+    }
+    
     return { 
       statusCode: 500, 
       body: JSON.stringify({ 
