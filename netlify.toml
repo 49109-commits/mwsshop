@@ -7,15 +7,12 @@
   NODE_VERSION = "20"
   DATABASE_URL = "postgresql://neondb_owner:npg_9vqFwH7pLnUs@ep-autumn-mouse-a1albu7d-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
-[[redirects]]
-  from = "/api/browser_extension/*"
-  to = "/.netlify/functions/browser-extension-user"
-  status = 200
-
+# Redirect browser extension API to function
 [[redirects]]
   from = "/api/browser_extension/user"
   to = "/.netlify/functions/browser-extension-user"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/*"
