@@ -17,7 +17,14 @@ const handler: Handler = async (event: HandlerEvent) => {
   }
 
   try {
-    const { email, purpose } = JSON.parse(event.body || '{}');
+    let parsedBody;
+    try {
+      parsedBody = JSON.parse(event.body || '{}');
+    } catch {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
+    }
+    
+    const { email, purpose } = parsedBody;
 
     if (!email || !purpose) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Email and purpose are required' }) };

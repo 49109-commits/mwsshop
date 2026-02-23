@@ -11,21 +11,37 @@ const handler: Handler = async (event: HandlerEvent) => {
   }
 
   try {
+    console.log('create-order: Starting order creation');
+    
     const cookie = event.headers.cookie || '';
     const match = cookie.match(/session=([^;]+)/);
 
     if (!match) {
+      console.log('create-order: No session cookie found');
       return { statusCode: 401, body: JSON.stringify({ error: 'Not authenticated' }) };
     }
 
     const token = match[1];
+    console.log('create-order: Token found, validating session');
     const user = await getSessionUser(token);
 
     if (!user) {
+      console.log('create-order: Invalid session');
       return { statusCode: 401, body: JSON.stringify({ error: 'Invalid session' }) };
     }
 
-    const { items, roomNumber } = JSON.parse(event.body || '{}');
+    console.log('create-order: User authenticated:', user.user_id);
+    
+    let parsedBody;
+    try {
+      parsedBody = JSON.parse(event.body || '{}');
+    } catch (parseError) {
+      console.log('create-order: Failed to parse request body:', parseError);
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
+    }
+    
+    const { items, roomNumber } = parsedBody;
+    console.log('create-order: Received items:', items?.length, 'room:', roomNumber);
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Items are required' }) };
@@ -37,11 +53,13 @@ const handler: Handler = async (event: HandlerEvent) => {
 
     const qrValue = generateQRCode();
 
+    console.log('create-order: Inserting order into database');
     const result = await sql`
       INSERT INTO orders (user_id, items, qr_value, room_number, status)
       VALUES (${user.user_id}, ${JSON.stringify(items)}, ${qrValue}, ${roomNumber.trim()}, 'placed')
       RETURNING id, items, qr_value, room_number, status, created_at
     `;
+    console.log('create-order: Order inserted successfully:', result[0]?.id);
 
     const order = result[0];
 

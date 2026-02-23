@@ -31,7 +31,14 @@ const handler: Handler = async (event: HandlerEvent) => {
   }
 
   try {
-    const { username, email, password } = JSON.parse(event.body || '{}');
+    let parsedBody;
+    try {
+      parsedBody = JSON.parse(event.body || '{}');
+    } catch {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
+    }
+    
+    const { username, email, password } = parsedBody;
 
     if (!username || !email || !password) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Username, email, and password are required' }) };

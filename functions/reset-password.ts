@@ -20,7 +20,14 @@ const handler: Handler = async (event: HandlerEvent) => {
   }
 
   try {
-    const { token, password } = JSON.parse(event.body || '{}');
+    let parsedBody;
+    try {
+      parsedBody = JSON.parse(event.body || '{}');
+    } catch {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
+    }
+    
+    const { token, password } = parsedBody;
 
     if (!token || !password) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Token and password are required' }) };

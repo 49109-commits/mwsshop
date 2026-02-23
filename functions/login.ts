@@ -8,7 +8,17 @@ const handler: Handler = async (event: HandlerEvent) => {
   }
 
   try {
-    const { emailOrUsername, password } = JSON.parse(event.body || '{}');
+    console.log('login: Starting login process');
+    console.log('login: DATABASE_URL present:', !!process.env.DATABASE_URL);
+    
+    let parsedBody;
+    try {
+      parsedBody = JSON.parse(event.body || '{}');
+    } catch {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
+    }
+    
+    const { emailOrUsername, password } = parsedBody;
 
     if (!emailOrUsername || !password) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Email/username and password are required' }) };
@@ -17,6 +27,7 @@ const handler: Handler = async (event: HandlerEvent) => {
     const input = emailOrUsername.trim().toLowerCase();
     
     // Try to find user by email or username
+    console.log('login: Querying database for user');
     const users = await sql`
       SELECT id, username, email, password_hash, email_verified_at
       FROM users 

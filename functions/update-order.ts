@@ -21,7 +21,14 @@ const handler: Handler = async (event: HandlerEvent) => {
       return { statusCode: 401, body: JSON.stringify({ error: 'Invalid session' }) };
     }
 
-    const { id, items, status } = JSON.parse(event.body || '{}');
+    let parsedBody;
+    try {
+      parsedBody = JSON.parse(event.body || '{}');
+    } catch {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
+    }
+    
+    const { id, items, status } = parsedBody;
 
     if (!id) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Order ID is required' }) };

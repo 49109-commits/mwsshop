@@ -7,7 +7,14 @@ const handler: Handler = async (event: HandlerEvent) => {
   }
 
   try {
-    const { token } = JSON.parse(event.body || '{}');
+    let parsedBody;
+    try {
+      parsedBody = JSON.parse(event.body || '{}');
+    } catch {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
+    }
+    
+    const { token } = parsedBody;
 
     if (!token) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Token is required' }) };
