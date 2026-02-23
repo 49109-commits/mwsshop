@@ -20,10 +20,15 @@ const handler: Handler = async (event: HandlerEvent) => {
   }
 
   try {
+    console.log('browser-extension-user: Request received');
+    console.log('browser-extension-user: Headers:', JSON.stringify(event.headers));
+    
     let token: string | null = null;
 
     // Try to get token from Authorization header first (for browser extensions)
     const authHeader = event.headers.authorization || event.headers.Authorization;
+    console.log('browser-extension-user: Auth header:', authHeader);
+    
     if (authHeader) {
       // Support both "Bearer token" and just "token" formats
       if (authHeader.toLowerCase().startsWith('bearer ')) {
@@ -36,22 +41,30 @@ const handler: Handler = async (event: HandlerEvent) => {
     // Fall back to cookie if no Authorization header
     if (!token) {
       const cookie = event.headers.cookie || '';
+      console.log('browser-extension-user: Cookie:', cookie.substring(0, 50) + '...');
       const match = cookie.match(/session=([^;]+)/);
       if (match) {
         token = match[1];
       }
     }
 
-    // If no token found, return unauthorized
+    console.log('browser-extension-user: Token found:', !!token);
+
+    // If no token found, return not logged in (but successful response)
+    // This allows the browser extension to distinguish between logged in and not logged in
     if (!token) {
-      return { 
-        statusCode: 401, 
-        body: JSON.stringify({ 
-          error: { 
-            errors: ['Invalid Authorization'] 
-          },
-          isKamiApiSuccessfulResponse: false 
-        }) 
+      return {
+        statusCode: 200,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Authorization, Content-Type'
+        },
+        body: JSON.stringify({
+          isKamiApiSuccessfulResponse: true,
+          user: null,
+          message: 'Not authenticated'
+        })
       };
     }
 
@@ -59,14 +72,19 @@ const handler: Handler = async (event: HandlerEvent) => {
     const user = await getSessionUser(token);
 
     if (!user) {
-      return { 
-        statusCode: 401, 
-        body: JSON.stringify({ 
-          error: { 
-            errors: ['Invalid Authorization'] 
-          },
-          isKamiApiSuccessfulResponse: false 
-        }) 
+      // Invalid token - return not logged in (but successful response)
+      return {
+        statusCode: 200,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Authorization, Content-Type'
+        },
+        body: JSON.stringify({
+          isKamiApiSuccessfulResponse: true,
+          user: null,
+          message: 'Invalid or expired session'
+        })
       };
     }
 
