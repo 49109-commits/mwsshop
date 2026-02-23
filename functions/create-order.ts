@@ -59,27 +59,32 @@ const handler: Handler = async (event: HandlerEvent) => {
     console.log('create-order: qrValue:', qrValue);
     console.log('create-order: roomNumber:', roomNumber.trim());
     
-    const result = await sql`
-      INSERT INTO orders (user_id, items, qr_value, room_number, status)
-      VALUES (${user.user_id}, ${JSON.stringify(items)}, ${qrValue}, ${roomNumber.trim()}, 'placed')
-      RETURNING id, items, qr_value, room_number, status, created_at
-    `;
-    console.log('create-order: Order inserted successfully:', result[0]?.id);
+    try {
+      const result = await sql`
+        INSERT INTO orders (user_id, items, qr_value, room_number, status)
+        VALUES (${user.user_id}, ${JSON.stringify(items)}, ${qrValue}, ${roomNumber.trim()}, 'placed')
+        RETURNING id, items, qr_value, room_number, status, created_at
+      `;
+      console.log('create-order: Order inserted successfully:', result[0]?.id);
+      
+      const order = result[0];
 
-    const order = result[0];
-
-    return {
-      statusCode: 201,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: order.id,
-        items: order.items,
-        qr_value: order.qr_value,
-        room_number: order.room_number,
-        status: order.status,
-        created_at: order.created_at,
-      }),
-    };
+      return {
+        statusCode: 201,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: order.id,
+          items: order.items,
+          qr_value: order.qr_value,
+          room_number: order.room_number,
+          status: order.status,
+          created_at: order.created_at,
+        }),
+      };
+    } catch (dbError) {
+      console.error('create-order: Database error:', dbError);
+      return { statusCode: 500, body: JSON.stringify({ error: 'Database error: ' + (dbError as Error).message }) };
+    }
   } catch (error) {
     console.error('Error in create-order:', error);
     return { statusCode: 500, body: JSON.stringify({ error: 'Internal server error' }) };
