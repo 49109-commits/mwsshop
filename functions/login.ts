@@ -1,5 +1,5 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { sql, createSession } from './shared/db';
 
 const handler: Handler = async (event: HandlerEvent) => {
@@ -39,7 +39,7 @@ const handler: Handler = async (event: HandlerEvent) => {
     }
 
     const user = users[0];
-    const validPassword = await bcrypt.compare(password, user.password_hash);
+    const validPassword = bcrypt.compareSync(password, user.password_hash);
 
     if (!validPassword) {
       return { statusCode: 401, body: JSON.stringify({ error: 'Invalid email or password' }) };

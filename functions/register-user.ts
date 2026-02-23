@@ -1,5 +1,5 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { sql } from './shared/db';
 
 const SALT_ROUNDS = 10;
@@ -73,7 +73,7 @@ const handler: Handler = async (event: HandlerEvent) => {
     }
 
     // Hash password and create user
-    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    const passwordHash = bcrypt.hashSync(password, SALT_ROUNDS);
 
     const result = await sql`
       INSERT INTO users (username, email, password_hash)
