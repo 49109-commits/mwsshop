@@ -1,5 +1,4 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
-import { getSessionUser } from './shared/db';
 
 /**
  * Browser Extension User Endpoint
